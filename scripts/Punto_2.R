@@ -136,7 +136,6 @@ cor_income <- datos_chicago %>%
     .groups = "drop"
   )
 
-print("Correlaciones Raza-Ingreso:")
 print(cor_income)
 
 cor_tabla <- cor_income %>%
@@ -199,7 +198,6 @@ indices_temporales <- datos_chicago %>%
     .groups = "drop"
   )
 
-print("Índices de Segregación:")
 print(indices_temporales)
 
 indices_tabla <- indices_temporales %>%
@@ -255,7 +253,7 @@ ggsave(store_file("indices_evolution.png"), p_indices,
        width = 10, height = 8, dpi = 300)
 
 # ============================================================
-# 3. TIPPING POINTS (MÉTODO MAYOR T)
+# 3. TIPPING POINTS
 # ============================================================
 
 # Preparar datos con cambio NORMALIZADO (Card et al. 2008)
@@ -275,13 +273,7 @@ tipping_data <- datos_chicago %>%
   filter(!is.na(norm_chg_white)) %>%
   ungroup()
 
-# ============================================================
-# MÉTODO: MAYOR VALOR T (con restricción de rango razonable)
-# ============================================================
-# Este método identifica el punto donde la diferencia en el cambio
-# de población blanca es estadísticamente más significativa
-# Buscamos solo en el rango 5-60% para evitar extremos
-
+# Método: Mayor valor T (con restricción de rango razonable)
 find_biggest_t <- function(data, x, y, min_pct = 5, max_pct = 60) {
   # Filtrar a rango razonable
   data_range <- data %>%
@@ -308,93 +300,50 @@ find_biggest_t <- function(data, x, y, min_pct = 5, max_pct = 60) {
   return(points[max_t_index])
 }
 
-# ============================================================
-# CALCULAR TIPPING POINTS: 2000-2015
-# ============================================================
-
-# MINORÍAS - usar toda la muestra (como probablemente hizo el otro grupo)
-data_2000_min <- tipping_data %>% 
-  filter(year == 2000)
+# Calcular tipping points para ambos períodos
+data_2000_min <- tipping_data %>% filter(year == 2000)
+data_2000_black <- tipping_data %>% filter(year == 2000, frac_black > 0)
+data_2000_hisp <- tipping_data %>% filter(year == 2000, frac_hispanic > 0)
 
 tp_min_2000 <- find_biggest_t(data_2000_min, "frac_minority", "norm_chg_white")
-
-# AFRO-AMERICANOS - usar toda la muestra con población negra
-data_2000_black <- tipping_data %>% 
-  filter(year == 2000, frac_black > 0)
-
 tp_black_2000 <- find_biggest_t(data_2000_black, "frac_black", "norm_chg_white")
-
-# HISPANOS - usar toda la muestra con población hispana
-data_2000_hisp <- tipping_data %>% 
-  filter(year == 2000, frac_hispanic > 0)
-
 tp_hisp_2000 <- find_biggest_t(data_2000_hisp, "frac_hispanic", "norm_chg_white")
 
-# ============================================================
-# CALCULAR TIPPING POINTS: 2015-2020
-# ============================================================
-
-# MINORÍAS
-data_2015_min <- tipping_data %>% 
-  filter(year == 2015)
+data_2015_min <- tipping_data %>% filter(year == 2015)
+data_2015_black <- tipping_data %>% filter(year == 2015, frac_black > 0)
+data_2015_hisp <- tipping_data %>% filter(year == 2015, frac_hispanic > 0)
 
 tp_min_2015 <- find_biggest_t(data_2015_min, "frac_minority", "norm_chg_white")
-
-# AFRO-AMERICANOS
-data_2015_black <- tipping_data %>% 
-  filter(year == 2015, frac_black > 0)
-
 tp_black_2015 <- find_biggest_t(data_2015_black, "frac_black", "norm_chg_white")
-
-# HISPANOS
-data_2015_hisp <- tipping_data %>% 
-  filter(year == 2015, frac_hispanic > 0)
-
 tp_hisp_2015 <- find_biggest_t(data_2015_hisp, "frac_hispanic", "norm_chg_white")
 
-# ============================================================
-# TABLA DE RESULTADOS (en proporciones para comparar con otro grupo)
-# ============================================================
-
+# Tabla de resultados 
 tipping_results <- tibble(
-  Año = c(2000, 2015, 2020),
-  Minorías = c(tp_min_2000, tp_min_2015, NA) / 100,
-  `Afro-Americanos` = c(tp_black_2000, tp_black_2015, NA) / 100,
-  Hispanos = c(tp_hisp_2000, tp_hisp_2015, NA) / 100
-) %>%
-  mutate(across(where(is.numeric), ~round(., 3)))
-
-print("Tipping Points (fracción del grupo):")
-print(tipping_results)
-
-# También crear versión en porcentajes
-tipping_results_pct <- tibble(
-  Grupo = rep(c("Minorías", "Afro-Americanos", "Hispanos"), each = 2),
-  Periodo = rep(c("2000-2015", "2015-2020"), 3),
-  `Tipping Point (%)` = c(tp_min_2000, tp_min_2015, 
-                          tp_black_2000, tp_black_2015, 
-                          tp_hisp_2000, tp_hisp_2015)
+  Periodo = c("2000-2015", "2015-2020"),
+  Minorías = c(tp_min_2000, tp_min_2015),
+  `Afro-Americanos` = c(tp_black_2000, tp_black_2015),
+  Hispanos = c(tp_hisp_2000, tp_hisp_2015)
 ) %>%
   mutate(across(where(is.numeric), ~round(., 1)))
 
-print("\nTipping Points (%):")
-print(tipping_results_pct)
+cat("\n=== TIPPING POINTS (%) ===\n")
+print(tipping_results)
 
-# Exportar (versión estilo otro grupo)
+# Exportar tabla
 tabla_tp_xtable <- xtable(tipping_results,
-                          caption = "Tipping points por grupo racial y año (fracción de la población del grupo)",
+                          caption = "Tipping points por grupo racial y período de transición (\\%)",
                           label = "tab:tipping",
-                          align = c("l", "c", "c", "c", "c"),
-                          digits = 3)
+                          align = c("l", "l", "c", "c", "c"),
+                          digits = c(0, 0, 1, 1, 1))
 
 print(tabla_tp_xtable,
       include.rownames = FALSE,
       caption.placement = "top",
       booktabs = TRUE,
+      sanitize.text.function = function(x){x},
       file = store_file("tabla_tipping_points.tex"))
 
 write.csv(tipping_results, store_file("tipping_points.csv"), row.names = FALSE)
-write.csv(tipping_results_pct, store_file("tipping_points_pct.csv"), row.names = FALSE)
 
 # ============================================================
 # VISUALIZACIÓN
@@ -402,51 +351,39 @@ write.csv(tipping_results_pct, store_file("tipping_points_pct.csv"), row.names =
 
 plot_tipping <- function(data, x_var, y_var, tp, titulo) {
   
-  mean_y <- mean(data[[y_var]], na.rm = TRUE)
+  data_clean <- data %>%
+    filter(!is.na(!!sym(x_var)), !is.na(!!sym(y_var)))
   
-  # Suavizado con splines a ambos lados del tipping point
-  smooth_data <- data %>%
-    arrange(!!sym(x_var)) %>%
-    mutate(
-      smooth_left = if_else(!!sym(x_var) < tp,
-                            predict(smooth.spline(!!sym(x_var), !!sym(y_var), spar = 1),
-                                    data[[x_var]])$y, NA_real_),
-      smooth_right = if_else(!!sym(x_var) > tp,
-                             predict(smooth.spline(!!sym(x_var), !!sym(y_var), spar = 1),
-                                     data[[x_var]])$y, NA_real_)
-    )
-  
-  p <- ggplot(data, aes(x = !!sym(x_var), y = !!sym(y_var))) +
-    geom_point(color = "gray", alpha = 0.5, size = 1) +
-    geom_line(data = smooth_data, aes(x = !!sym(x_var), y = smooth_left), 
-              color = "blue", linewidth = 1) +
-    geom_line(data = smooth_data, aes(x = !!sym(x_var), y = smooth_right), 
-              color = "purple", linewidth = 1) +
-    geom_vline(xintercept = tp, linetype = "dashed", 
-               color = "red", linewidth = 1) +
-    geom_hline(yintercept = mean_y, linetype = "solid", 
-               color = "black", linewidth = 0.5) +
-    geom_hline(yintercept = 0, linetype = "dotted", 
-               color = "gray50", linewidth = 0.5) +
-    annotate("text", x = tp, y = max(data[[y_var]], na.rm = TRUE) * 0.9,
+  p <- ggplot(data_clean, aes(x = !!sym(x_var), y = !!sym(y_var))) +
+    geom_point(alpha = 0.3, size = 1, color = "gray40") +
+    geom_smooth(method = "loess", se = TRUE, color = "#2C3E50", 
+                fill = "#3498DB", alpha = 0.2) +
+    geom_hline(yintercept = 0, linetype = "solid", color = "black", 
+               linewidth = 0.5, alpha = 0.7) +
+    geom_vline(aes(xintercept = tp), 
+               linetype = "dashed", color = "#E74C3C", linewidth = 1) +
+    annotate("text", x = tp, y = max(data_clean[[y_var]], na.rm = TRUE) * 0.9,
              label = paste0("TP = ", round(tp, 1), "%"),
-             color = "red", angle = 90, vjust = -0.5, size = 3.5) +
+             color = "#E74C3C", size = 4, fontface = "bold") +
+    scale_x_continuous(labels = percent_format(scale = 1)) +
+    scale_y_continuous(labels = number_format(accuracy = 0.01)) +
     labs(
       title = titulo,
-      x = "Fracción del Grupo Racial (%)",
-      y = "Cambio Normalizado de la Población Blanca",
-      caption = "Línea roja: Tipping Point | Líneas azul/morada: Suavizado con splines\nLínea negra: Media del cambio | Muestra limitada a < 60%"
+      x = "Proporción del Grupo Racial (%)",
+      y = "Cambio Normalizado en Población Blanca",
+      caption = "Nota: Línea suavizada = LOESS. Línea vertical = Tipping Point estimado."
     ) +
-    theme_minimal() +
+    theme_minimal(base_size = 12) +
     theme(
-      plot.title = element_text(hjust = 0.5, face = "bold"),
-      plot.caption = element_text(hjust = 0, size = 8, color = "gray40")
+      plot.title = element_text(hjust = 0.5, face = "bold", size = 14),
+      plot.caption = element_text(size = 8, hjust = 0),
+      panel.grid.minor = element_blank()
     )
   
   return(p)
 }
 
-# Generar gráficos
+# Generar gráficos para 2000-2015
 p_tp_min <- plot_tipping(
   data_2000_min, "frac_minority", "norm_chg_white",
   tp_min_2000,
@@ -471,7 +408,7 @@ p_tp_hisp <- plot_tipping(
 ggsave(store_file("tipping_hispanic_2000.png"), p_tp_hisp, 
        width = 10, height = 7, dpi = 300)
 
-# También para 2015-2020
+# Generar gráficos para 2015-2020
 p_tp_min_2015 <- plot_tipping(
   data_2015_min, "frac_minority", "norm_chg_white",
   tp_min_2015,
@@ -515,14 +452,14 @@ chicago_map_tp <- chicago_map %>%
 
 p_map_tp <- ggplot() +
   geom_sf(data = chicago_map_tp, aes(fill = categoria), 
-          color = "white", size = 0.1) +
+          color = "white", linewidth = 0.1) +
   scale_fill_manual(
     values = c("Debajo del TP" = "#3288bd", "Encima del TP" = "#d53e4f"),
     na.value = "grey90"
   ) +
   labs(
     title = "Census Tracts según Tipping Point (2015)",
-    subtitle = paste0("TP: ", round(tp_avg * 100, 1), "%"),
+    subtitle = paste0("TP promedio: ", round(tp_avg * 100, 1), "%"),
     fill = "Categoría"
   ) +
   theme_void() +
@@ -555,7 +492,7 @@ chicago_map_trans <- chicago_shp %>%
 
 p_transitions <- ggplot() +
   geom_sf(data = chicago_map_trans, aes(fill = transicion), 
-          color = "white", size = 0.1) +
+          color = "white", linewidth = 0.1) +
   scale_fill_manual(
     values = c("Siempre debajo" = "#2166ac", "Cruzó TP" = "#d6604d",
                "Siempre encima" = "#b2182b", "Retrocedió" = "#92c5de"),
@@ -563,7 +500,7 @@ p_transitions <- ggplot() +
   ) +
   labs(
     title = "Transiciones de Census Tracts (2000-2020)",
-    subtitle = paste0("TP: ", round(tp_avg * 100, 1), "%"),
+    subtitle = paste0("TP promedio: ", round(tp_avg * 100, 1), "%"),
     fill = "Transición"
   ) +
   theme_void() +
@@ -577,7 +514,6 @@ transition_summary <- chicago_transitions %>%
   count(transicion) %>%
   mutate(porcentaje = round(n / sum(n, na.rm = TRUE) * 100, 1))
 
-print("\nResumen de Transiciones:")
 print(transition_summary)
 
 tabla_trans_xtable <- xtable(transition_summary,
@@ -593,3 +529,4 @@ print(tabla_trans_xtable,
       file = store_file("tabla_transiciones.tex"))
 
 write.csv(transition_summary, store_file("transiciones_summary.csv"), row.names = FALSE)
+
