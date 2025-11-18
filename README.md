@@ -1,43 +1,38 @@
-Punto 2 – Análisis Espacial y Segregación Urbana en Chicago
+# Punto 2 – Análisis Espacial y Segregación Urbana en Chicago
 
-Autores: Corina Hernandez, Santiago Melo, Sara Torres
+**Autores:** Corina Hernández, Santiago Melo, Sara Torres
 
-Este directorio contiene el código necesario para reproducir el análisis del Punto 2 del Taller 2. El ejercicio incluye visualización espacial, cálculo de correlaciones, medición de segregación e identificación de tipping points para Chicago entre 2000 y 2020.
+Este directorio contiene el código necesario para reproducir el análisis del Punto 2 del Taller 2, que incluye visualización espacial, correlaciones, medición de segregación e identificación de *tipping points* para Chicago entre 2000 y 2020.
 
-Estructura del repositorio
+---
 
-data/
-Contiene los datos utilizados: panel socioeconómico por census tract y shapefiles de Chicago.
+## 📁 Estructura del repositorio
 
-scripts/
-Incluye el script principal del ejercicio (Ejercicio2.R), con todo el procesamiento, generación de mapas, índices y gráficos.
+- **data/**  
+  Datos utilizados: panel socioeconómico por *census tract* y shapefiles de Chicago.
 
-stores/
-Carpeta donde se guardan automáticamente todas las salidas generadas:
-mapas, figuras, tablas LaTeX y archivos .csv.
+- **scripts/**  
+  Script principal del ejercicio (`Ejercicio2.R`), donde se realiza todo el procesamiento, mapas, índices y gráficos.
 
-Qué hace el script
+- **stores/**  
+  Salidas generadas automáticamente: mapas, figuras, tablas LaTeX y archivos `.csv`.
 
-Carga y limpia bases de población e ingreso por tract.
+---
 
-Crea mapas temáticos de proporción Afro-Americana e Hispana (2000–2020).
+## 🔍 Qué hace el script principal
 
-Calcula correlaciones entre composición racial e ingreso mediano.
+- Limpia y organiza los datos de población e ingreso.  
+- Genera mapas temáticos de proporción Afro-Americana e Hispana (2000–2020).  
+- Calcula correlaciones entre composición racial e ingreso mediano.  
+- Estima índices de segregación (Dissimilarity e Isolation).  
+- Identifica *tipping points* siguiendo Card et al. (2008).  
+- Exporta todos los resultados a `stores/`.
 
-Computa índices de segregación (Dissimilarity e Isolation) por año.
+---
 
-Estima tipping points siguiendo el método de Card et al. (2008).
+## ▶️ Cómo ejecutarlo
 
-Genera visualizaciones de tipping points y mapas de transición 2000–2020.
+1. Abrir el proyecto `T2_EU_CH_SM_ST_E2.Rproj`.  
+2. Ejecutar `scripts/Ejercicio2.R`.
 
-Exporta todos los resultados a la carpeta stores/.
-
-Cómo ejecutarlo
-
-Abrir el proyecto T2_EU_CH_SM_ST_E2.Rproj.
-
-Ajustar rutas si es necesario.
-
-Correr el script en scripts/Ejercicio2.R.
-
-Revisar resultados dentro de stores/.
+---
